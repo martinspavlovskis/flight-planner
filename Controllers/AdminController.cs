@@ -17,7 +17,6 @@ namespace FlightPlanner.API.Controllers
     {
         private static readonly object _locker = new();
 
-
         [HttpGet]
         [Route("flights/{id}")]
         public IActionResult GetFlight(int id)
@@ -56,7 +55,6 @@ namespace FlightPlanner.API.Controllers
                 FlightStorage.AddFlight(newFlight);
                 return Created("", newFlight);
             }
-
         }
 
         [HttpDelete]
