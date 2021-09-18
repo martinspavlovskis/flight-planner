@@ -37,7 +37,6 @@ namespace FlightPlanner.API.Controllers
         [Route("flights")]
         public IActionResult PutFlight(AddFlightRequest flight)
         {
-
             lock (_locker)
             {
                 var newFlight = FlightStorage.MakeFlight(flight);
