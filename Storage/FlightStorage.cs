@@ -1,4 +1,6 @@
-﻿using FlightPlanner.API.Models;
+﻿using FlightPlanner.API.Data;
+using FlightPlanner.API.Models;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,40 +8,56 @@ using System.Threading.Tasks;
 
 namespace FlightPlanner.API.Storage
 {
-    public class FlightStorage
+    public class FlightStorage : IFlightStorage
     {
-        private static readonly List<Flight> _flights = new();
-        private static int _id;
-
-        public static Flight GetFlightById(int id)
+        private readonly FlightPlannerDbContext _db;
+        public FlightStorage(FlightPlannerDbContext db)
         {
-            return _flights.FirstOrDefault(x => x.Id == id);
+            _db = db;
         }
 
-        public static List<Flight> GetAllFlights()
+        public Flight GetFlightById(int id)
         {
-            return _flights.ToList();
+            return _db.Flights
+                .Include(a=> a.To)
+                .Include(a => a.From)
+                .FirstOrDefault(x => x.Id == id);
         }
 
-        public static void ClearFlights()
+        public ICollection<Flight> GetAllFlights()
         {
-            _flights.Clear();
+            return _db.Flights.Include(a=>a.To).Include(a=>a.From).ToList();
         }
 
-        public static Flight AddFlight(Flight flight)
+        public void ClearFlights()
         {
-            flight.Id = _id;
-            _id++;
-            _flights.Add(flight);
+            _db.Flights.RemoveRange(_db.Flights);             
+            _db.SaveChanges();
+        }
+
+        public Flight AddFlight(Flight flight)
+        {         
+            _db.Flights.Add(flight);
+            _db.SaveChanges();
             return flight;
         }
 
-        public static void DeleteFlight(int id)
+        public void DeleteFlight(int id)
         {
-            _flights.Remove(GetFlightById(id));
+           
+            var flight = _db.Flights
+                .Include(a => a.To)
+                .Include(a => a.From)
+                .FirstOrDefault(x => x.Id == id);
+            if(flight != null)
+            {
+                _db.Flights.Remove(flight);
+                _db.SaveChanges();
+            }
+
         }
 
-        public static Flight MakeFlight(AddFlightRequest flight)
+        public Flight MakeFlight(AddFlightRequest flight)
         {
             return new Flight
             {
@@ -51,14 +69,14 @@ namespace FlightPlanner.API.Storage
             };
         }
 
-        public static List<Airport> GetAirportByPhrase(string input)
+        public List<Airport> GetAirportByPhrase(string input)
         {
             input = input.Trim().ToLower();
-            return _flights.Select(x => x.From).Where
+            return _db.Flights.Select(x => x.From).Where
                 (x =>
             x.AirportCode.ToLower().Contains(input) ||
             x.City.ToLower().Contains(input) ||
             x.Country.ToLower().Contains(input)).ToList();
-        }
+        }              
     }
 }
