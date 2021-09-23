@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace FlightPlanner.API.Models
+﻿namespace FlightPlanner.API.Models
 {
     public class PageResult
     {

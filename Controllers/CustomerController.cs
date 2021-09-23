@@ -1,11 +1,6 @@
 ﻿using FlightPlanner.API.Models;
-using FlightPlanner.API.Storage;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace FlightPlanner.API.Controllers
 {
@@ -13,12 +8,18 @@ namespace FlightPlanner.API.Controllers
     [ApiController]
     public class CustomerController : ControllerBase
     {
+        private readonly IFlightStorage _flightStorage;       
+
+        public CustomerController(IFlightStorage flightStorage)
+        {
+            _flightStorage = flightStorage;
+        }
 
         [HttpGet]
         [Route("airports")]
         public IActionResult SearchAirportsByPhrase(string search)
         {
-            var airports = FlightStorage.GetAirportByPhrase(search);
+            var airports = _flightStorage.GetAirportByPhrase(search);
             if (airports.Count == 0)
             {
                 return NotFound();
@@ -30,7 +31,7 @@ namespace FlightPlanner.API.Controllers
         [Route("flights/{id}")]
         public IActionResult GetFlightById(int id)
         {
-            var flight = FlightStorage.GetFlightById(id);
+            var flight = _flightStorage.GetFlightById(id);
             if (flight == null)
             {
                 return NotFound();
@@ -42,7 +43,7 @@ namespace FlightPlanner.API.Controllers
         [Route("flights/search")]
         public IActionResult SearchFlight([FromBody] SearchFlightsRequest request)
         {
-            var allFlights = FlightStorage.GetAllFlights();
+            var allFlights = _flightStorage.GetAllFlights();
             var filteredFlights = allFlights.Where(x =>
             x.To.AirportCode == request.To &&
             x.From.AirportCode == request.From &&

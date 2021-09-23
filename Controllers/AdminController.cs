@@ -1,12 +1,8 @@
 ﻿using FlightPlanner.API.Models;
-using FlightPlanner.API.Storage;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace FlightPlanner.API.Controllers
 {
@@ -15,7 +11,13 @@ namespace FlightPlanner.API.Controllers
     [ApiController]
     public class AdminController : ControllerBase
     {
+        private readonly IFlightStorage _flightStorage;       
         private static readonly object _locker = new();
+
+        public AdminController(IFlightStorage flightStorage)
+        {
+            _flightStorage = flightStorage;
+        }       
 
         [HttpGet]
         [Route("flights/{id}")]
@@ -23,7 +25,7 @@ namespace FlightPlanner.API.Controllers
         {
             lock (_locker)
             {
-                var flight = FlightStorage.GetFlightById(id);
+                var flight = _flightStorage.GetFlightById(id);
                 if (flight is null)
                 {
                     return NotFound();
@@ -39,7 +41,7 @@ namespace FlightPlanner.API.Controllers
         {
             lock (_locker)
             {
-                var newFlight = FlightStorage.MakeFlight(flight);
+                var newFlight = _flightStorage.MakeFlight(flight);
 
                 if (FlightAlreadyExists(flight))
                 {
@@ -51,7 +53,7 @@ namespace FlightPlanner.API.Controllers
                     return BadRequest();
                 }
 
-                FlightStorage.AddFlight(newFlight);
+                _flightStorage.AddFlight(newFlight);
                 return Created("", newFlight);
             }
         }
@@ -62,7 +64,7 @@ namespace FlightPlanner.API.Controllers
         {
             lock (_locker)
             {
-                FlightStorage.DeleteFlight(id);
+                _flightStorage.DeleteFlight(id);
                 return Ok();
             }
         }
@@ -77,9 +79,9 @@ namespace FlightPlanner.API.Controllers
             return DateTime.Parse(flight.DepartureTime) >= DateTime.Parse(flight.ArrivalTime);
         }
 
-        private static bool FlightAlreadyExists(AddFlightRequest request)
+        private bool FlightAlreadyExists(AddFlightRequest request)
         {
-            return FlightStorage.GetAllFlights().Any(x =>
+            return _flightStorage.GetAllFlights().Any(x =>
                 x.From.AirportCode == request.From.AirportCode &&
                 x.From.City == request.From.City &&
                 x.From.Country == request.From.Country &&
@@ -92,7 +94,7 @@ namespace FlightPlanner.API.Controllers
             );
         }
 
-        private static bool WrongFormat(AddFlightRequest flight)
+        private bool WrongFormat(AddFlightRequest flight)
         {
             return (flight.From == null ||
                  flight.To == null ||
