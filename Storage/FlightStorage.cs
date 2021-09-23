@@ -1,10 +1,8 @@
 ﻿using FlightPlanner.API.Data;
 using FlightPlanner.API.Models;
 using Microsoft.EntityFrameworkCore;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace FlightPlanner.API.Storage
 {
@@ -43,8 +41,7 @@ namespace FlightPlanner.API.Storage
         }
 
         public void DeleteFlight(int id)
-        {
-           
+        {         
             var flight = _db.Flights
                 .Include(a => a.To)
                 .Include(a => a.From)
